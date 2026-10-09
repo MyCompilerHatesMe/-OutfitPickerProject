@@ -463,12 +463,11 @@ Strict instructions:
     # Prioritized model fallback list (handles 503 high load, 404 unavailable on newer accounts, etc.)
     candidate_models = [
         "gemini-3.8-flash",
-        "gemini-3.8-flash-lite",
+        "gemini-3.7-flash",
         "gemini-3.6-flash",
         "gemini-3.5-flash",
         "gemini-3.5-flash-lite",
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
+        "gemini-3.1-flash-lite",
     ]
 
     last_error: Optional[Exception] = None
