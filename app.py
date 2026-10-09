@@ -460,26 +460,50 @@ Strict instructions:
 
     image_part = pil_to_clean_part(image)
 
-    try:
-        response = client.models.generate_content(
-            model="gemini-3.8-flash",
-            contents=[image_part, prompt],
-        )
-    except Exception as err:
-        err_str = str(err).lower()
-        if "not found" in err_str or "404" in err_str or "unsupported" in err_str:
-            # Fallback to gemini-2.5-flash if needed
+    # Prioritized model fallback list (handles 503 high load, 404 unavailable on newer accounts, etc.)
+    candidate_models = [
+        "gemini-3.8-flash",
+        "gemini-3.8-flash-lite",
+        "gemini-3.6-flash",
+        "gemini-3.5-flash",
+        "gemini-3.5-flash-lite",
+        "gemini-2.5-flash",
+        "gemini-2.0-flash",
+    ]
+
+    last_error: Optional[Exception] = None
+    successful_response = None
+    used_model: Optional[str] = None
+
+    for model_name in candidate_models:
+        try:
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model=model_name,
                 contents=[image_part, prompt],
             )
-        else:
-            raise
+            if response and response.text:
+                successful_response = response
+                used_model = model_name
+                break
+        except Exception as err:
+            err_str = str(err).lower()
+            last_error = err
+            # If API key itself is invalid, stop immediately
+            if "api_key_invalid" in err_str or "invalid api key" in err_str:
+                raise err
+            # For 503 (service unavailable / high load), 404 (not found), or quota, try next model
+            print(f"[Model Fallback] {model_name} failed: {err}. Attempting next model...")
+            continue
 
-    if not response or not response.text:
-        raise ValueError("No response received from the Gemini model.")
+    if not successful_response or not successful_response.text:
+        if last_error:
+            raise last_error
+        raise ValueError("No response received from any of the available Gemini models.")
 
-    return clean_text_encoding(response.text)
+    if used_model:
+        st.session_state["used_model"] = used_model
+
+    return clean_text_encoding(successful_response.text)
 
 def main():
     inject_whimsical_styles()
@@ -701,6 +725,9 @@ def main():
 
         parsed_outfit = parse_styling_response(st.session_state["latest_suggestion"])
         render_outfit_cards(parsed_outfit)
+
+        if st.session_state.get("used_model"):
+            st.caption(f"Curated using {st.session_state['used_model']}")
 
         # Expandable raw details
         with st.expander("View Full Text Notes", expanded=False):
