@@ -460,10 +460,21 @@ Strict instructions:
 
     image_part = pil_to_clean_part(image)
 
-    response = client.models.generate_content(
-        model="gemini-2.5-flash",
-        contents=[image_part, prompt],
-    )
+    try:
+        response = client.models.generate_content(
+            model="gemini-3.8-flash",
+            contents=[image_part, prompt],
+        )
+    except Exception as err:
+        err_str = str(err).lower()
+        if "not found" in err_str or "404" in err_str or "unsupported" in err_str:
+            # Fallback to gemini-2.5-flash if needed
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[image_part, prompt],
+            )
+        else:
+            raise
 
     if not response or not response.text:
         raise ValueError("No response received from the Gemini model.")

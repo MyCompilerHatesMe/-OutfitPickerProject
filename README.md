@@ -1,6 +1,6 @@
 # AI Wardrobe Stylist
 
-A clean, whimsical, responsive wardrobe styling web app built with Python and Streamlit, powered by the Google Gemini API (`gemini-2.5-flash`). Designed specifically for deployment on Streamlit Community Cloud and seamless touch usage on iPad Safari.
+A clean, whimsical, responsive wardrobe styling web app built with Python and Streamlit, powered by the Google Gemini API (`gemini-3.8-flash`). Designed specifically for deployment on Streamlit Community Cloud and seamless touch usage on iPad Safari.
 
 ---
 
